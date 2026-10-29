@@ -33,3 +33,26 @@ content:
       - name: mission
         label: Misi
         type: rich-text
+          - name: products
+    label: Produk
+    type: collection
+    path: content/products
+    format: json
+    filename: "{primary}.json"
+    fields:
+      - name: name
+        label: Nama Produk
+        type: string
+        required: true
+      - name: description
+        label: Deskripsi Produk
+        type: text
+      - name: specifications
+        label: Spesifikasi
+        type: rich-text
+      - name: packaging
+        label: Kemasan
+        type: string
+      - name: image
+        label: Foto Produk
+        type: image
