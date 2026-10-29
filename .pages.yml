@@ -1,0 +1,35 @@
+media:
+  input: media
+  output: /media
+
+content:
+  - name: website
+    label: Website AROS
+    type: file
+    path: data/website.json
+    format: json
+    fields:
+      - name: company_name
+        label: Nama Perusahaan
+        type: string
+      - name: tagline
+        label: Tagline
+        type: string
+      - name: director
+        label: Direktur
+        type: string
+      - name: email
+        label: Email Perusahaan
+        type: string
+      - name: address
+        label: Alamat Perusahaan
+        type: text
+      - name: about
+        label: Tentang AROS
+        type: rich-text
+      - name: vision
+        label: Visi
+        type: text
+      - name: mission
+        label: Misi
+        type: rich-text
