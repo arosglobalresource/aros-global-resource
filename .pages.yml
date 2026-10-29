@@ -33,7 +33,7 @@ content:
       - name: mission
         label: Misi
         type: rich-text
-          - name: products
+  - name: products
     label: Produk
     type: collection
     path: content/products
