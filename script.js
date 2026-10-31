@@ -6,7 +6,12 @@
 
   let lang = 'en';
 
-  // LANGUAGE SWITCHER
+  const API_URL =
+    'https://api.github.com/repos/arosglobalresource/aros-global-resource/contents/content/products?ref=main';
+
+  const RAW_URL =
+    'https://raw.githubusercontent.com/arosglobalresource/aros-global-resource/main';
+
   function setLanguage(next) {
     lang = next;
     document.documentElement.lang = next;
@@ -16,9 +21,13 @@
       if (value !== null) el.innerHTML = value;
     });
 
-    if (toggle) {
-      toggle.textContent = next === 'en' ? 'ID' : 'EN';
-    }
+    if (toggle) toggle.textContent = next === 'en' ? 'ID' : 'EN';
+
+    document.querySelectorAll('.product-inquiry-link').forEach(link => {
+      link.textContent = next === 'en'
+        ? 'Submit your requirement →'
+        : 'Kirim kebutuhan Anda →';
+    });
   }
 
   if (toggle) {
@@ -27,7 +36,6 @@
     });
   }
 
-  // MOBILE MENU
   if (menuToggle && nav) {
     menuToggle.addEventListener('click', () => {
       nav.classList.toggle('open');
@@ -40,14 +48,9 @@
     });
   });
 
-  // AUTOMATIC YEAR
   const year = document.getElementById('year');
+  if (year) year.textContent = new Date().getFullYear();
 
-  if (year) {
-    year.textContent = new Date().getFullYear();
-  }
-
-  // INQUIRY FORM
   const form = document.getElementById('inquiryForm');
 
   if (form) {
@@ -55,7 +58,6 @@
       e.preventDefault();
 
       const d = new FormData(this);
-
       const subject = encodeURIComponent(
         'Business Inquiry — AROS GLOBAL RESOURCE'
       );
@@ -74,17 +76,14 @@
     });
   }
 
-  // LOAD PRODUCTS FROM PAGES CMS / GITHUB
   async function loadProducts() {
     if (!grid) return;
 
     try {
-      const response = await fetch(
-        'https://api.github.com/repos/arosglobalresource/aros-global-resource/contents/content/products?ref=main'
-      );
+      const response = await fetch(API_URL + '&cache=' + Date.now());
 
       if (!response.ok) {
-        throw new Error('Cannot access product collection');
+        throw new Error('GitHub product list unavailable');
       }
 
       const files = await response.json();
@@ -96,10 +95,14 @@
 
       const products = await Promise.all(
         jsonFiles.map(async file => {
-          const result = await fetch(file.download_url);
+          const result = await fetch(
+            RAW_URL + '/content/products/' +
+            encodeURIComponent(file.name) +
+            '?v=' + Date.now()
+          );
 
           if (!result.ok) {
-            throw new Error('Cannot read product: ' + file.name);
+            throw new Error('Cannot read ' + file.name);
           }
 
           return await result.json();
@@ -121,10 +124,10 @@
         let imagePath = product.image || '';
 
         if (imagePath.startsWith('/')) {
-          imagePath = encodeURI(imagePath);
+          imagePath = RAW_URL + imagePath;
         }
 
-        image.src = imagePath;
+        image.src = imagePath + '?v=' + Date.now();
         image.alt = product.name || 'AROS Product';
         image.loading = 'lazy';
 
@@ -149,7 +152,7 @@
 
         const link = document.createElement('a');
         link.href = '#inquiry';
-        link.className = 'text-link';
+        link.className = 'text-link product-inquiry-link';
         link.textContent = lang === 'en'
           ? 'Submit your requirement →'
           : 'Kirim kebutuhan Anda →';
@@ -169,11 +172,8 @@
 
     } catch (error) {
       console.error('AROS Products:', error);
-
-      // Existing HTML product cards remain visible if loading fails.
     }
   }
 
   loadProducts();
-
 })();
