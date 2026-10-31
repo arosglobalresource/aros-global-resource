@@ -1,179 +1,312 @@
 (function () {
-  const toggle = document.getElementById('langToggle');
-  const menuToggle = document.querySelector('.menu-toggle');
-  const nav = document.getElementById('nav');
-  const grid = document.getElementById('productGrid');
+  "use strict";
 
-  let lang = 'en';
+  // ==========================================
+  // AROS GLOBAL RESOURCE - WEBSITE SCRIPT
+  // ==========================================
 
-  const API_URL =
-    'https://api.github.com/repos/arosglobalresource/aros-global-resource/contents/content/products?ref=main';
+  const GITHUB_API =
+    "https://api.github.com/repos/arosglobalresource/aros-global-resource/contents/content/products?ref=main";
 
-  const RAW_URL =
-    'https://raw.githubusercontent.com/arosglobalresource/aros-global-resource/main';
+  const GITHUB_RAW =
+    "https://raw.githubusercontent.com/arosglobalresource/aros-global-resource/main";
 
-  function setLanguage(next) {
-    lang = next;
-    document.documentElement.lang = next;
+  let currentLanguage = "en";
 
-    document.querySelectorAll('[data-en][data-id]').forEach(el => {
-      const value = el.getAttribute('data-' + next);
-      if (value !== null) el.innerHTML = value;
+  // ==========================================
+  // LANGUAGE SWITCHER
+  // ==========================================
+
+  const languageButton = document.getElementById("langToggle");
+
+  function setLanguage(language) {
+    currentLanguage = language;
+
+    document.documentElement.lang = language;
+
+    document.querySelectorAll("[data-en][data-id]").forEach(element => {
+      const value = element.getAttribute("data-" + language);
+
+      if (value !== null) {
+        element.innerHTML = value;
+      }
     });
 
-    if (toggle) toggle.textContent = next === 'en' ? 'ID' : 'EN';
+    if (languageButton) {
+      languageButton.textContent =
+        language === "en" ? "ID" : "EN";
+    }
 
-    document.querySelectorAll('.product-inquiry-link').forEach(link => {
-      link.textContent = next === 'en'
-        ? 'Submit your requirement →'
-        : 'Kirim kebutuhan Anda →';
+    // Update tombol produk yang dibuat secara dinamis
+    document.querySelectorAll(".cms-product-link").forEach(link => {
+      link.textContent =
+        language === "en"
+          ? "Submit your requirement →"
+          : "Kirim kebutuhan Anda →";
     });
   }
 
-  if (toggle) {
-    toggle.addEventListener('click', () => {
-      setLanguage(lang === 'en' ? 'id' : 'en');
+  if (languageButton) {
+    languageButton.addEventListener("click", function () {
+      setLanguage(currentLanguage === "en" ? "id" : "en");
     });
   }
 
-  if (menuToggle && nav) {
-    menuToggle.addEventListener('click', () => {
-      nav.classList.toggle('open');
+  // ==========================================
+  // MOBILE NAVIGATION
+  // ==========================================
+
+  const menuButton = document.querySelector(".menu-toggle");
+  const navigation = document.getElementById("nav");
+
+  if (menuButton && navigation) {
+    menuButton.addEventListener("click", function () {
+      navigation.classList.toggle("open");
+    });
+
+    navigation.querySelectorAll("a").forEach(link => {
+      link.addEventListener("click", function () {
+        navigation.classList.remove("open");
+      });
     });
   }
 
-  document.querySelectorAll('#nav a').forEach(link => {
-    link.addEventListener('click', () => {
-      if (nav) nav.classList.remove('open');
-    });
-  });
+  // ==========================================
+  // FOOTER YEAR
+  // ==========================================
 
-  const year = document.getElementById('year');
-  if (year) year.textContent = new Date().getFullYear();
+  const yearElement = document.getElementById("year");
 
-  const form = document.getElementById('inquiryForm');
+  if (yearElement) {
+    yearElement.textContent = new Date().getFullYear();
+  }
 
-  if (form) {
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
+  // ==========================================
+  // INQUIRY FORM
+  // ==========================================
 
-      const d = new FormData(this);
+  const inquiryForm = document.getElementById("inquiryForm");
+
+  if (inquiryForm) {
+    inquiryForm.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const formData = new FormData(this);
+
+      const name = formData.get("name");
+      const email = formData.get("email");
+      const role = formData.get("role");
+      const details = formData.get("details");
+
       const subject = encodeURIComponent(
-        'Business Inquiry — AROS GLOBAL RESOURCE'
+        "Business Inquiry — AROS GLOBAL RESOURCE"
       );
 
       const body = encodeURIComponent(
-        'Name / Company: ' + d.get('name') +
-        '\nEmail: ' + d.get('email') +
-        '\nRole: ' + d.get('role') +
-        '\n\nRequirement details:\n' + d.get('details') +
-        '\n\nSent from AROS GLOBAL RESOURCE website.'
+        "Name / Company: " + name +
+        "\nEmail: " + email +
+        "\nRole: " + role +
+        "\n\nRequirement Details:\n" + details +
+        "\n\nSent from AROS GLOBAL RESOURCE website."
       );
 
       window.location.href =
-        'mailto:arosglobalresource@gmail.com?subject=' +
-        subject + '&body=' + body;
+        "mailto:arosglobalresource@gmail.com?subject=" +
+        subject +
+        "&body=" +
+        body;
     });
   }
 
+  // ==========================================
+  // PRODUCT IMAGE URL
+  // ==========================================
+
+  function getProductImage(imagePath) {
+    if (!imagePath) {
+      return "";
+    }
+
+    // Jika URL gambar sudah lengkap
+    if (/^https?:\/\//i.test(imagePath)) {
+      return imagePath;
+    }
+
+    // Rapikan path gambar dari CMS
+    let cleanPath = imagePath.trim();
+
+    if (!cleanPath.startsWith("/")) {
+      cleanPath = "/" + cleanPath;
+    }
+
+    // Ambil gambar langsung dari GitHub Raw
+    return GITHUB_RAW +
+      encodeURI(cleanPath) +
+      "?v=" +
+      Date.now();
+  }
+
+  // ==========================================
+  // CREATE PRODUCT CARD
+  // ==========================================
+
+  function createProductCard(product) {
+    const card = document.createElement("article");
+    card.className = "product-card";
+
+    // Product image
+    const image = document.createElement("img");
+
+    image.src = getProductImage(product.image);
+    image.alt = product.name || "AROS Product";
+    image.loading = "lazy";
+
+    image.onerror = function () {
+      this.style.display = "none";
+    };
+
+    // Product content
+    const content = document.createElement("div");
+    content.className = "product-content";
+
+    // Product tag
+    const tag = document.createElement("span");
+    tag.className = "product-tag";
+    tag.textContent = "AROS PRODUCT";
+
+    // Product name
+    const title = document.createElement("h3");
+    title.textContent = product.name || "";
+
+    // Product description
+    const description = document.createElement("p");
+    description.textContent = product.description || "";
+
+    // Product specifications
+    const specifications = document.createElement("p");
+    specifications.textContent = product.specifications || "";
+
+    // Product packaging
+    const packaging = document.createElement("p");
+    packaging.textContent = product.packaging || "";
+
+    // Inquiry link
+    const link = document.createElement("a");
+
+    link.href = "#inquiry";
+    link.className = "text-link cms-product-link";
+
+    link.textContent =
+      currentLanguage === "en"
+        ? "Submit your requirement →"
+        : "Kirim kebutuhan Anda →";
+
+    // Assemble card
+    content.appendChild(tag);
+    content.appendChild(title);
+    content.appendChild(description);
+
+    if (product.specifications) {
+      content.appendChild(specifications);
+    }
+
+    if (product.packaging) {
+      content.appendChild(packaging);
+    }
+
+    content.appendChild(link);
+
+    card.appendChild(image);
+    card.appendChild(content);
+
+    return card;
+  }
+
+  // ==========================================
+  // LOAD PRODUCTS FROM GITHUB / PAGES CMS
+  // ==========================================
+
   async function loadProducts() {
-    if (!grid) return;
+    const productGrid = document.getElementById("productGrid");
+
+    if (!productGrid) {
+      console.error("AROS: productGrid tidak ditemukan.");
+      return;
+    }
 
     try {
-      const response = await fetch(API_URL + '&cache=' + Date.now());
+      // Ambil daftar file produk
+      const response = await fetch(GITHUB_API, {
+        cache: "no-store"
+      });
 
       if (!response.ok) {
-        throw new Error('GitHub product list unavailable');
+        throw new Error(
+          "GitHub API error: " + response.status
+        );
       }
 
       const files = await response.json();
 
-      const jsonFiles = files.filter(file =>
-        file.type === 'file' &&
-        file.name.endsWith('.json')
+      // Ambil hanya file JSON
+      const productFiles = files.filter(file =>
+        file.type === "file" &&
+        file.name.toLowerCase().endsWith(".json")
       );
 
+      if (productFiles.length === 0) {
+        throw new Error("Belum ada produk JSON.");
+      }
+
+      // Ambil isi seluruh file produk
       const products = await Promise.all(
-        jsonFiles.map(async file => {
-          const result = await fetch(
-            RAW_URL + '/content/products/' +
-            encodeURIComponent(file.name) +
-            '?v=' + Date.now()
+        productFiles.map(async function (file) {
+          const response = await fetch(
+            file.download_url + "?v=" + Date.now(),
+            {
+              cache: "no-store"
+            }
           );
 
-          if (!result.ok) {
-            throw new Error('Cannot read ' + file.name);
+          if (!response.ok) {
+            throw new Error(
+              "Gagal membaca produk: " + file.name
+            );
           }
 
-          return await result.json();
+          return await response.json();
         })
       );
 
-      if (!products.length) {
-        throw new Error('No products found');
-      }
+      // Kosongkan produk lama setelah data CMS berhasil dibaca
+      productGrid.innerHTML = "";
 
-      grid.innerHTML = '';
-
-      products.forEach(product => {
-        const card = document.createElement('article');
-        card.className = 'product-card';
-
-        const image = document.createElement('img');
-
-        let imagePath = product.image || '';
-
-        if (imagePath.startsWith('/')) {
-          imagePath = RAW_URL + imagePath;
-        }
-
-        image.src = imagePath + '?v=' + Date.now();
-        image.alt = product.name || 'AROS Product';
-        image.loading = 'lazy';
-
-        const content = document.createElement('div');
-        content.className = 'product-content';
-
-        const tag = document.createElement('span');
-        tag.className = 'product-tag';
-        tag.textContent = 'AROS PRODUCT';
-
-        const title = document.createElement('h3');
-        title.textContent = product.name || '';
-
-        const description = document.createElement('p');
-        description.textContent = product.description || '';
-
-        const specifications = document.createElement('p');
-        specifications.textContent = product.specifications || '';
-
-        const packaging = document.createElement('p');
-        packaging.textContent = product.packaging || '';
-
-        const link = document.createElement('a');
-        link.href = '#inquiry';
-        link.className = 'text-link product-inquiry-link';
-        link.textContent = lang === 'en'
-          ? 'Submit your requirement →'
-          : 'Kirim kebutuhan Anda →';
-
-        content.appendChild(tag);
-        content.appendChild(title);
-        content.appendChild(description);
-        content.appendChild(specifications);
-        content.appendChild(packaging);
-        content.appendChild(link);
-
-        card.appendChild(image);
-        card.appendChild(content);
-
-        grid.appendChild(card);
+      // Tampilkan semua produk CMS
+      products.forEach(function (product) {
+        productGrid.appendChild(
+          createProductCard(product)
+        );
       });
 
+      console.log(
+        "AROS: " + products.length +
+        " produk berhasil dimuat dari GitHub."
+      );
+
     } catch (error) {
-      console.error('AROS Products:', error);
+      console.error(
+        "AROS Product Loading Error:",
+        error
+      );
+
+      // Jika gagal, kartu produk HTML lama tetap ditampilkan.
     }
   }
 
+  // ==========================================
+  // START WEBSITE
+  // ==========================================
+
   loadProducts();
+
 })();
